@@ -1,0 +1,3 @@
+Apontador|1.0
+Caneta|1.5
+Borracha|0.5
