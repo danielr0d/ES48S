@@ -13,7 +13,7 @@ import java.util.List;
 public class SupplierController {
     private SupplierView view;
     private List<SupplierModel> suppliers;
-    private final File file = new File("fornecedores.txt");
+    private final File file = new File("fornecedores.bin");
 
     public SupplierController(SupplierView view) {
         this.view = view;
@@ -113,26 +113,16 @@ public class SupplierController {
     private void loadFromFile() {
         suppliers.clear();
         if (!file.exists()) return;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split("\\|");
-                if (parts.length >= 2) {
-                    suppliers.add(new SupplierModel(parts[0], parts[1]));
-                }
-            }
-        } catch (IOException e) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            suppliers = (List<SupplierModel>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
             System.out.println("Erro ao carregar fornecedores: " + e.getMessage());
         }
     }
 
     private void saveToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
-            for (SupplierModel s : suppliers) {
-                writer.write(s.getName() + "|" + s.getPhone());
-                writer.newLine();
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(suppliers);
         } catch (IOException e) {
             if (view != null) JOptionPane.showMessageDialog(view, "Erro ao salvar fornecedores: " + e.getMessage());
             else System.out.println("Erro ao salvar fornecedores: " + e.getMessage());

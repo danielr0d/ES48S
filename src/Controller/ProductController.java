@@ -13,7 +13,7 @@ import java.util.List;
 public class ProductController {
     private ProductView view;
     private List<ProductModel> products;
-    private final File file = new File("produtos.txt");
+    private final File file = new File("produtos.bin");
 
     public ProductController(ProductView view) {
         this.view = view;
@@ -117,31 +117,19 @@ public class ProductController {
     private void loadFromFile() {
         products.clear();
         if (!file.exists()) return;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split("\\|");
-                if (parts.length >= 2) {
-                    String name = parts[0];
-                    double price = 0;
-                    try { price = Double.parseDouble(parts[1]); } catch (NumberFormatException ignored) {}
-                    products.add(new ProductModel(name, price));
-                }
-            }
-        } catch (IOException e) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            products = (List<ProductModel>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
             System.out.println("Erro ao carregar produtos: " + e.getMessage());
         }
     }
 
     private void saveToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
-            for (ProductModel p : products) {
-                writer.write(p.getName() + "|" + p.getPrice());
-                writer.newLine();
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(products);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(view, "Erro ao salvar produtos: " + e.getMessage());
+            if (view != null) JOptionPane.showMessageDialog(view, "Erro ao salvar produtos: " + e.getMessage());
+            else System.out.println("Erro ao salvar produtos: " + e.getMessage());
         }
     }
 }

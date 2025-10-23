@@ -1,6 +1,9 @@
 package Model;
 
-public class SupplierModel {
+import java.io.Serializable;
+
+public class SupplierModel implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String name;
     private String phone;
 

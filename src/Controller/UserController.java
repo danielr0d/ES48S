@@ -13,7 +13,7 @@ import java.util.List;
 public class UserController {
     private UserView view;
     private List<UserModel> users;
-    private final File file = new File("clientes.txt");
+    private final File file = new File("clientes.bin");
 
     public UserController(UserView view) {
         this.view = view;
@@ -146,42 +146,16 @@ public class UserController {
     private void loadFromFile() {
         users.clear();
         if (!file.exists()) return;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                if (line.contains("Nome do cliente:")) {
-                    String[] parts = line.split(",");
-                    String username = "";
-                    String email = "";
-                    for (String p : parts) {
-                        if (p.contains("Nome do cliente:")) username = p.replace("Nome do cliente:", "").trim();
-                        if (p.contains("Email do cliente:")) email = p.replace("Email do cliente:", "").trim();
-                    }
-                    if (!username.isEmpty() || !email.isEmpty()) users.add(new UserModel(username, email));
-                } else if (line.contains("|")) {
-                    String[] parts = line.split("\\|");
-                    String username = parts.length > 0 ? parts[0] : "";
-                    String email = parts.length > 1 ? parts[1] : "";
-                    users.add(new UserModel(username, email));
-                } else {
-                    String[] parts = line.split(",");
-                    if (parts.length >= 2) {
-                        users.add(new UserModel(parts[0].trim(), parts[1].trim()));
-                    }
-                }
-            }
-        } catch (IOException e) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            users = (List<UserModel>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
             System.out.println("Erro ao carregar clientes: " + e.getMessage());
         }
     }
 
     private void saveToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
-            for (UserModel u : users) {
-                writer.write(u.getUsername() + "|" + u.getEmail());
-                writer.newLine();
-            }
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(users);
         } catch (IOException e) {
             if (view != null) JOptionPane.showMessageDialog(view, "Erro ao salvar clientes: " + e.getMessage());
             else System.out.println("Erro ao salvar clientes: " + e.getMessage());
